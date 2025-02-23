@@ -498,7 +498,7 @@ START_TEST(test_mul_float_float) {
   printf("res:\n");
   print_decimal(result);
 
-  ck_assert_int_eq(result.bits[0], 11233);  // 11,233 * 1,9 = 21,3427
+  ck_assert_int_eq(result.bits[0], 213427);  // 11,233 * 1,9 = 21,3427
   ck_assert_int_eq(result.bits[1], 0);
   ck_assert_int_eq(result.bits[2], 0);
   ck_assert_int_eq(s21_get_sign(result), S21_POSITIVE);
