@@ -219,6 +219,8 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   int scale1 = s21_get_scale(value_1);
   int scale2 = s21_get_scale(value_2);
 
+  s21_decimal multiplier = value_2;
+
   // if (scale2 == 0 && scale1 != 0) {
   //   swap(&value_1, &value_2);
   //   scale1 = s21_get_scale(value_1);
@@ -230,7 +232,6 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   // то есть умножаем его на 2 (получаем value_2 * 2^(i+1))
   for (int i = 0; i < 96 && error == S21_OK; i++) {
     if (s21_get_bit(value_1, i)) {
-      s21_decimal multiplier = value_2;
       // возведение 2 в степень i
       s21_shift_decimal_left(&multiplier, i);
       s21_decimal temp;
@@ -243,6 +244,70 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   // нужном месте
   s21_set_scale(result, scale1 + scale2);
   s21_set_sign(result, sign_flag);
+
+  return error;
+}
+
+int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
+  int error = 0, sign_flag = 0;
+
+  if (is_zero(value_2)) {
+    return S21_DIV_BY_ZERO;
+  }
+
+  s21_zero_decimal(result);
+
+  int sign1 = s21_get_sign(value_1);
+  int sign2 = s21_get_sign(value_2);
+
+  if ((sign1 == S21_POSITIVE && sign2 == S21_POSITIVE) ||
+      (sign1 == S21_NEGATIVE && sign2 == S21_NEGATIVE)) {
+    sign_flag = S21_POSITIVE;
+  } else if (sign1 != sign2) {
+    sign_flag = S21_NEGATIVE;
+  }
+
+  int scale1 = s21_get_scale(value_1);
+  int scale2 = s21_get_scale(value_2);
+  s21_normalize_scale(&value_1, &value_2);
+
+  s21_decimal dividend = value_1;
+  s21_decimal divisor = value_2;
+
+  // целая часть
+  s21_decimal quotient;
+  s21_zero_decimal(&quotient);
+
+  // находим позиции старших битов
+  int i = 95, j = 95;
+  while (i >= 0 && !s21_get_bit(dividend, i)) {
+    i--;
+  }
+  while (j >= 0 && !s21_get_bit(divisor, j)) {
+    j--;
+  }
+
+  // расстояние, на которое нужно сдвинуть делитель
+  // чтобы его старший бит совпал с старшим битом делимого
+  // (если же единичка второго числа левее первого числа то по итогу у нас
+  // полуится число вида - 0.xxxx)
+  int shift = (i >= j) ? i - j : 0;
+
+  // сборка целой части путем сдвига делителя влево
+  // если первое число больше, то отнимаем от делителя сдвинутый делитель
+  for (int k = shift; k >= 0 && !error; k--) {
+    s21_decimal shifted = divisor;
+    if (k > 0) {
+      s21_shift_decimal_left(&shifted, k);
+    }
+    if (s21_is_greater_or_equal(dividend, shifted)) {
+      error = s21_sub(dividend, shifted, &dividend);
+      s21_set_bit(&quotient, k, 1);
+    }
+  }
+  // целая часть заполнена, переход к дробной2
+
+  s21_set_sign(&result, sign_flag);
 
   return error;
 }
@@ -261,6 +326,18 @@ void s21_shift_decimal_left(s21_decimal *dst, int num) {
       // установка крайнего бита
       s21_set_bit(dst, (i + 1) * 32 - 1, buffer[i]);
     }
+  }
+}
+
+void s21_shift_decimal_right(s21_decimal *dst, int num) {
+  for (int k = 0; k < num; k++) {
+    // Сохраняем младший бит следующего блока
+    unsigned int carry0 = dst->bits[1] & 1;  // для bits[0]
+    unsigned int carry1 = dst->bits[2] & 1;  // для bits[1]
+
+    dst->bits[0] = (dst->bits[0] >> 1) | (carry0 << 31);
+    dst->bits[1] = (dst->bits[1] >> 1) | (carry1 << 31);
+    dst->bits[2] >>= 1;  // самый старший блок сдвигается без переноса
   }
 }
 

@@ -95,6 +95,7 @@ int s21_check_overflow(s21_int256 value);
 int s21_sub(s21_decimal value1, s21_decimal value2, s21_decimal *result);
 int s21_add(s21_decimal value1, s21_decimal value2, s21_decimal *result);
 int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result);
+int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result);
 // void swap(s21_decimal *value_1, s21_decimal *value_2);
 void s21_shift_decimal_left(s21_decimal *dst, int num);
 void s21_to_int256(s21_decimal value1, s21_int256 *value2);
