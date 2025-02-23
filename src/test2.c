@@ -1,8 +1,8 @@
 #include "s21_decimal.h"
 
 int main() {
-  s21_decimal num1 = {{2147483647, 2147483647, 2147483647, 0}};
-  s21_decimal num2 = {{2147483647, 2147483647, 2147483647, 0}};
+  s21_decimal num1 = {{11233, 0, 0, 0x00030000}};
+  s21_decimal num2 = {{19, 0, 0, 0x00010000}};
   s21_decimal result;
 
   printf("a:\n");

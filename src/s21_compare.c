@@ -92,3 +92,6 @@ int s21_is_equal(s21_decimal d1, s21_decimal d2) {
 int s21_is_not_equal(s21_decimal d1, s21_decimal d2) {
   return (s21_compare(d1, d2) == S21_EQ) ? 0 : 1;
 }
+
+// (3 << 2) & 1 => 00011 << 2 = 01100 => 01100 & 00001 = 00000
+// (3 << 2) % 32
