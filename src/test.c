@@ -447,7 +447,7 @@ START_TEST(test_mul_int_float_no_swap) {
   printf("res:\n");
   print_decimal(result);
 
-  ck_assert_int_eq(result.bits[0], 25);  // 10 * 2,5 = 25
+  ck_assert_int_eq(result.bits[0], 250);  // 10 * 2,5 = 25
   ck_assert_int_eq(result.bits[1], 0);
   ck_assert_int_eq(result.bits[2], 0);
   ck_assert_int_eq(s21_get_sign(result), S21_POSITIVE);
@@ -472,7 +472,7 @@ START_TEST(test_mul_int_float_with_swap) {
   printf("res:\n");
   print_decimal(result);
 
-  ck_assert_int_eq(result.bits[0], 25);  // 2,5 * 10 = 25
+  ck_assert_int_eq(result.bits[0], 250);  // 2,5 * 10 = 25
   ck_assert_int_eq(result.bits[1], 0);
   ck_assert_int_eq(result.bits[2], 0);
   ck_assert_int_eq(s21_get_sign(result), S21_POSITIVE);

@@ -219,11 +219,11 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   int scale1 = s21_get_scale(value_1);
   int scale2 = s21_get_scale(value_2);
 
-  if (scale2 == 0 && scale1 != 0) {
-    swap(&value_1, &value_2);
-    scale1 = s21_get_scale(value_1);
-    scale2 = s21_get_scale(value_2);
-  }
+  // if (scale2 == 0 && scale1 != 0) {
+  //   swap(&value_1, &value_2);
+  //   scale1 = s21_get_scale(value_1);
+  //   scale2 = s21_get_scale(value_2);
+  // }
 
   // Если i-й бит равен 1, прибавляем текущее multiplier к result
   // После каждой итерации сдвигаем multiplier на 1 бит влево,
@@ -243,6 +243,7 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   // нужном месте
   s21_set_scale(result, scale1 + scale2);
   s21_set_sign(result, sign_flag);
+
   return error;
 }
 
@@ -263,8 +264,8 @@ void s21_shift_decimal_left(s21_decimal *dst, int num) {
   }
 }
 
-void swap(s21_decimal *value_1, s21_decimal *value_2) {
-  s21_decimal temp = *value_1;
-  *value_1 = *value_2;
-  *value_2 = temp;
-}
+// void swap(s21_decimal *value_1, s21_decimal *value_2) {
+//   s21_decimal temp = *value_1;
+//   *value_1 = *value_2;
+//   *value_2 = temp;
+// }
