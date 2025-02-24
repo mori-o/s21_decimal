@@ -169,8 +169,6 @@ int s21_check_int256(s21_int256 value) {
          value.bits[5] + value.bits[6] + value.bits[7];
 }
 void s21_to_int256(s21_decimal value1, s21_int256 *value2) {
-  value2->bits[8] = 0;
-
   value2->bits[0] = value1.bits[0];
   value2->bits[1] = value1.bits[1];
   value2->bits[2] = value1.bits[2];
