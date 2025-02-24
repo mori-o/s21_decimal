@@ -13,3 +13,5 @@ t:
 	find . -type f \( -name "*.c" -o -name "*.h" \) -exec clang-format -i {} +
 	gcc $(FLAGS)   s21_conversion.c s21_compare.c helpers.c arithmetic.c test2.c
 	./a.out
+clean:
+	find . -type f \( -name "*.o" -o -name "*.gcda" -o -name "*.gcno" \) -exec rm -f {} +
