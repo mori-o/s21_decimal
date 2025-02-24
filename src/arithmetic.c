@@ -305,7 +305,8 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
       s21_set_bit(&quotient, k, 1);
     }
   }
-  // целая часть заполнена, переход к дробной2
+
+  // сборка дробной части
 
   s21_set_sign(&result, sign_flag);
 
