@@ -194,12 +194,6 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
 
   s21_decimal multiplier = value_2;
 
-  // if (scale2 == 0 && scale1 != 0) {
-  //   swap(&value_1, &value_2);
-  //   scale1 = s21_get_scale(value_1);
-  //   scale2 = s21_get_scale(value_2);
-  // }
-
   // Если i-й бит равен 1, прибавляем текущее multiplier к result
   // После каждой итерации сдвигаем multiplier на 1 бит влево,
   // то есть умножаем его на 2 (получаем value_2 * 2^(i+1))
@@ -213,77 +207,88 @@ int s21_mul(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
     }
   }
 
+  // находим позиции старших битов
+  int i = 95, j = 95;
+  while (i >= 0 && !s21_get_bit(value_1, i)) {
+    i--;
+  }
+  while (j >= 0 && !s21_get_bit(value_2, j)) {
+    j--;
+  }
+
+  int shift = (i >= j) ? i - j : 0;
+
   // если скейлы 0, то ничего не произойдет, а если нет - поставится запятая в
   // нужном месте
-  s21_set_scale(result, scale1 + scale2);
+  s21_set_scale(result, scale1 + scale2 - shift);
   s21_set_sign(result, sign_flag);
 
   return error;
 }
 
-// int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
-//   int error = 0, sign_flag = 0;
+int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
+  int error = 0, sign_flag = 0;
 
-//   if (is_zero(value_2)) {
-//     return S21_DIV_BY_ZERO;
-//   }
+  if (is_zero(value_2)) {
+    return S21_DIV_BY_ZERO;
+  }
 
-//   s21_zero_decimal(result);
+  s21_zero_decimal(result);
 
-//   int sign1 = s21_get_sign(value_1);
-//   int sign2 = s21_get_sign(value_2);
+  int sign1 = s21_get_sign(value_1);
+  int sign2 = s21_get_sign(value_2);
 
-//   if ((sign1 == S21_POSITIVE && sign2 == S21_POSITIVE) ||
-//       (sign1 == S21_NEGATIVE && sign2 == S21_NEGATIVE)) {
-//     sign_flag = S21_POSITIVE;
-//   } else if (sign1 != sign2) {
-//     sign_flag = S21_NEGATIVE;
-//   }
+  if ((sign1 == S21_POSITIVE && sign2 == S21_POSITIVE) ||
+      (sign1 == S21_NEGATIVE && sign2 == S21_NEGATIVE)) {
+    sign_flag = S21_POSITIVE;
+  } else if (sign1 != sign2) {
+    sign_flag = S21_NEGATIVE;
+  }
 
-//   int scale1 = s21_get_scale(value_1);
-//   int scale2 = s21_get_scale(value_2);
-//   s21_normalize_scale(&value_1, &value_2);
+  int scale1 = s21_get_scale(value_1);
+  int scale2 = s21_get_scale(value_2);
+  s21_normalize_scale(&value_1, &value_2);
 
-//   s21_decimal dividend = value_1;
-//   s21_decimal divisor = value_2;
+  s21_decimal dividend = value_1;
+  s21_decimal divisor = value_2;
 
-//   // целая часть
-//   s21_decimal quotient;
-//   s21_zero_decimal(&quotient);
+  // целая часть
+  s21_decimal quotient;
+  s21_zero_decimal(&quotient);
 
-//   // находим позиции старших битов
-//   int i = 95, j = 95;
-//   while (i >= 0 && !s21_get_bit(dividend, i)) {
-//     i--;
-//   }
-//   while (j >= 0 && !s21_get_bit(divisor, j)) {
-//     j--;
-//   }
+  // находим позиции старших битов
+  int i = 95, j = 95;
+  while (i >= 0 && !s21_get_bit(dividend, i)) {
+    i--;
+  }
+  while (j >= 0 && !s21_get_bit(divisor, j)) {
+    j--;
+  }
 
-//   // расстояние, на которое нужно сдвинуть делитель
-//   // чтобы его старший бит совпал с старшим битом делимого
-//   // (если же единичка второго числа левее первого числа то по итогу у нас
-//   // полуится число вида - 0.xxxx)
-//   int shift = (i >= j) ? i - j : 0;
+  // расстояние, на которое нужно сдвинуть делитель
+  // чтобы его старший бит совпал с старшим битом делимого
+  // (если же единичка второго числа левее первого числа то по итогу у нас
+  // полуится число вида - 0.xxxx)
+  int shift = (i >= j) ? i - j : 0;
 
-//   // сборка целой части путем сдвига делителя влево
-//   // если первое число больше, то отнимаем от делителя сдвинутый делитель
-//   for (int k = shift; k >= 0 && !error; k--) {
-//     s21_decimal shifted = divisor;
-//     if (k > 0) {
-//       s21_shift_decimal_left(&shifted, k);
-//     }
-//     if (s21_is_greater_or_equal(dividend, shifted)) {
-//       error = s21_sub(dividend, shifted, &dividend);
-//       s21_set_bit(&quotient, k, 1);
-//     }
-//   }
-//   // целая часть заполнена, переход к дробной2
+  // сборка целой части путем сдвига делителя влево
+  // если первое число больше, то отнимаем от делителя сдвинутый делитель
+  for (int k = shift; k >= 0 && !error; k--) {
+    s21_decimal shifted = divisor;
+    if (k > 0) {
+      s21_shift_decimal_left(&shifted, k);
+    }
+    if (s21_is_greater_or_equal(dividend, shifted)) {
+      error = s21_sub(dividend, shifted, &dividend);
+      s21_set_bit(&quotient, k, 1);
+    }
+  }
+  // целая часть заполнена, переход к дробной
 
-//   s21_set_sign(&result, sign_flag);
+  s21_set_sign(&result, sign_flag);
 
-//   return error;
-// }
+  return error;
+}
 
 void s21_shift_decimal_left(s21_decimal *dst, int num) {
   int buffer[3] = {0};
@@ -313,9 +318,3 @@ void s21_shift_decimal_right(s21_decimal *dst, int num) {
     dst->bits[2] >>= 1;  // самый старший блок сдвигается без переноса
   }
 }
-
-// void swap(s21_decimal *value_1, s21_decimal *value_2) {
-//   s21_decimal temp = *value_1;
-//   *value_1 = *value_2;
-//   *value_2 = temp;
-// }
