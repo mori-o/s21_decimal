@@ -230,7 +230,7 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
   int error = 0, sign_flag = 0;
 
   if (is_zero(value_2)) {
-    return S21_DIV_BY_ZERO;
+    error = S21_DIV_BY_ZERO;
   }
 
   s21_zero_decimal(result);
@@ -283,7 +283,12 @@ int s21_div(s21_decimal value_1, s21_decimal value_2, s21_decimal *result) {
       s21_set_bit(&quotient, k, 1);
     }
   }
+
   // целая часть заполнена, переход к дробной
+  s21_decimal remainder = dividend;
+  s21_decimal final_result;
+  s21_zero_decimal(&final_result);
+  final_result = quotient;
 
   s21_set_sign(&result, sign_flag);
 
