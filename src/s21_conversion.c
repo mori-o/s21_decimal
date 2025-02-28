@@ -36,4 +36,34 @@ int s21_from_decimal_to_int(s21_decimal src, int *dst) {
 
   return error;
 }
+int s21_from_float_to_decimal(float src, s21_decimal *dst){
+  s21_zero_decimal(dst);
+  int error = S21_OK;
+  if (dst == NULL) error = S21_OVERFLOW;
 
+  int i = 0;
+    int whole_part = src;
+  while(src-whole_part != 0){
+    src *=10;
+    whole_part = src;
+    i++;
+  }
+  if (src > INT_MAX || src< INT_MIN) error = S21_OVERFLOW;
+  s21_set_scale(dst,i);
+  dst->bits[0] = src;
+return error;
+}
+int s21_from_decimal_to_float(s21_decimal src, float *dst){
+  int error = S21_OK;
+  if (src.bits[2] != 0 || src.bits[1] != 0) error = S21_OVERFLOW;
+  if (dst == NULL) error = S21_OVERFLOW;
+  int sign = s21_get_sign(src);
+  int scale = s21_get_scale(src);
+  *dst = src.bits[0];
+  for(int i = 0; i < scale; i++){
+    *dst /= 10;
+  }
+  if(sign) *dst = -*dst;
+  if (*dst > MAXFLOAT || *dst < -MAXFLOAT) error = S21_OVERFLOW;
+  return error;
+}
