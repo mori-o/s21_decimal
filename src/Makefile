@@ -1,17 +1,59 @@
-#Стадия test запускает тесты, стадия t привязана к файлу test2.c в котором можно сделать отдельный тестовый случай и проанализировать его 
-FLAGS = -Wall -Werror -Wextra
-TEST_FLAGS = -lcheck -lm
-all:
-	find . -type f \( -name "*.c" -o -name "*.h" \) -exec clang-format -i {} +
-	gcc $(FLAGS) helpers.c
-	./a.out
-test:
-	find . -type f \( -name "*.c" -o -name "*.h" \) -exec clang-format -i {} +
-	gcc $(FLAGS) $(TEST_FLAGS) s21_conversion.c arithmetic.c test.c s21_compare.c   helpers.c 
-	./a.out
-t:
-	find . -type f \( -name "*.c" -o -name "*.h" \) -exec clang-format -i {} +
-	gcc $(FLAGS)   s21_conversion.c s21_compare.c helpers.c arithmetic.c test2.c
-	./a.out
+CFLAGS = -Wall -Wextra -Werror -std=c11
+
+SOURCES = $(wildcard $(SOURCES_DIR)/*.c)
+HEADERS = s21_decimal.h
+LIB = s21_decimal.a
+OBJECTS = $(SOURCES:.c=.o)
+
+SOURCES_DIR = main_sources
+REPORT_DIR = report
+TESTS_DIR = tests
+
+OS = $(shell uname)
+ifeq ($(OS), Linux)
+	TFLAGS = -lcheck -lm -lsubunit
+else
+	TFLAGS = -lcheck
+endif
+
+all: clean $(LIB)
+
+$(LIB): $(OBJECTS)
+	ar rcs $(LIB) $(OBJECTS)
+
 clean:
-	find . -type f \( -name "*.o" -o -name "*.gcda" -o -name "*.gcno" \) -exec rm -f {} +
+	rm -rf $(SOURCES_DIR)/*.o *.a ./$(TESTS_DIR)/test_exec ./$(TESTS_DIR)/*.gcda ./$(TESTS_DIR)/*.gcno $(REPORT_DIR)
+	rm -rf $(SOURCES_DIR)/*.o *.a ./$(TESTS_DIR)/test_exec ./$(TESTS_DIR)/*.gcda ./$(TESTS_DIR)/*.gcno $(REPORT_DIR)
+	rm -rf *.gcda
+	rm -rf *.gcno
+	rm -rf *.info
+
+test: $(LIB)
+	gcc $(CFLAGS) ./$(TESTS_DIR)/test.c $(LIB) -o ./$(TESTS_DIR)/test_exec $(TFLAGS)
+	./$(TESTS_DIR)/test_exec
+
+t: $(LIB)
+	gcc $(CFLAGS) ./$(SOURCES_DIR)/test.c $(LIB) -o ./$(TESTS_DIR)/test_exec $(TFLAGS)
+	./$(TESTS_DIR)/test_exec
+
+gcov_s21_decimal.a:
+	$(CC) $(CFLAGS) -c $(SOURCES_DIR)/s21_*.c -fprofile-arcs -ftest-coverage
+	ar rc $(LIB) *.o
+	rm -rf *.o
+
+gcov_report: gcov_s21_decimal.a
+	mkdir -p $(REPORT_DIR)
+	gcc -fprofile-arcs -ftest-coverage ./$(TESTS_DIR)/test.c $(LIB) $(CHECK_LIBS) -o ./$(TESTS_DIR)/test_exec $(TFLAGS)
+	./$(TESTS_DIR)/test_exec
+	gcovr --html-details --gcov-exclude=./$(TESTS_DIR)/test_exec -o $(REPORT_DIR)/report.html
+#	lcov -t ./$(TESTS_DIR)/test_exec -o $(REPORT_DIR)/gcov_report.info -c -d .
+#	genhtml -o report $(REPORT_DIR)/gcov_report.info
+#	open $(REPORT_DIR)/index.html
+
+valgrind: test
+#	valgrind --tool=memcheck --leak-check=yes $(TESTS_DIR)/test_exec
+	2>&1 valgrind --tool=memcheck --leak-check=yes $(TESTS_DIR)/test_exec | grep ERROR
+
+format:
+	clang-format -i --style=google $(SOURCES) s21_decimal.h $(TESTS_DIR)/test.c
+#    clang-format -n --style=google $(SOURCES) s21_decimal.h

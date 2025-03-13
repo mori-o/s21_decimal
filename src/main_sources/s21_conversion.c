@@ -1,0 +1,83 @@
+#include "../s21_decimal.h"
+
+int s21_from_int_to_decimal(int src, s21_decimal *dst) {
+  int error = S21_OK;
+  if (!dst) {
+    error = S21_OVERFLOW;
+  } else {
+    s21_zero_decimal(dst);
+    if (src < 0) {
+      s21_set_sign(dst, S21_NEGATIVE);
+      src = -src;
+    }
+    dst->bits[0] = src;
+  }
+  return error;
+}
+
+// int s21_from_decimal_to_int(s21_decimal src, int *dst) {
+//   int error = s21_truncate(src, &src);
+//   if (src.bits[2] != 0 || src.bits[1] != 0) error = S21_OVERFLOW;
+//   if (dst == NULL) error = S21_OVERFLOW;
+//   int sign = s21_get_sign(src);
+//   int int_part = (int)src.bits[0];
+//   int exponent = s21_get_scale(src);
+//   for (int i = 0; i < exponent; i++) {
+//     int_part /= 10;
+//   }
+//   if (int_part > INT_MAX || int_part < INT_MIN) error = S21_OVERFLOW;
+//   *dst = (int)int_part;
+//   if (sign) *dst = -*dst;
+//   return error;
+// }
+
+int s21_from_decimal_to_int(s21_decimal src, int *dst) {
+  int error = s21_truncate(src, &src);
+  if (src.bits[2] != 0 || src.bits[1] != 0) error = S21_OVERFLOW;
+  if (dst == NULL) error = S21_OVERFLOW;
+  if (error == S21_OK) {
+    int sign = s21_get_sign(src);
+    int int_part = (int)src.bits[0];
+    if (int_part > INT_MAX || int_part < INT_MIN) error = S21_OVERFLOW;
+    *dst = (int)int_part;
+    if (sign) *dst = -*dst;
+  }
+  return error;
+}
+
+int s21_from_float_to_decimal(float src, s21_decimal *dst) {
+  s21_zero_decimal(dst);
+  int error = S21_OK, final_sign = S21_POSITIVE;
+  if (src < 0) {
+    final_sign = S21_NEGATIVE;
+    src *= -1;
+  }
+  if (dst == NULL) error = S21_OVERFLOW;
+  int i = 0;
+  int whole_part = src;
+  while (src - whole_part != 0) {
+    src *= 10;
+    whole_part = src;
+    i++;
+  }
+  if (src > INT_MAX || src < INT_MIN) error = S21_OVERFLOW;
+  s21_set_scale(dst, i);
+  s21_set_sign(dst, final_sign);
+  dst->bits[0] = src;
+  return error;
+}
+
+int s21_from_decimal_to_float(s21_decimal src, float *dst) {
+  int error = S21_OK;
+  if (src.bits[2] != 0 || src.bits[1] != 0) error = S21_OVERFLOW;
+  if (dst == NULL) error = S21_OVERFLOW;
+  int sign = s21_get_sign(src);
+  int scale = s21_get_scale(src);
+  *dst = src.bits[0];
+  for (int i = 0; i < scale; i++) {
+    *dst /= 10;
+  }
+  if (sign) *dst = -*dst;
+  if (*dst > FLT_MAX || *dst < FLT_MIN) error = S21_OVERFLOW;
+  return error;
+}
